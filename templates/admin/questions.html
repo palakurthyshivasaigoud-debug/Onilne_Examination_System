@@ -1,0 +1,60 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Question Bank{% endblock %}
+{% block page_title %}Question Bank{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+    <form method="GET" class="filter-form">
+        <select name="subject" onchange="this.form.submit()" class="select-field">
+            <option value="">All Subjects</option>
+            {% for s in subjects %}
+            <option value="{{ s }}" {% if s==selected_subject %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+    </form>
+    <div style="display:flex;gap:10px">
+        <a href="{{ url_for('admin.import_pdf') }}" class="btn-secondary">📄 Import from PDF</a>
+        <a href="{{ url_for('admin.add_question') }}" class="btn-primary">+ Add Question</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Subject</th>
+                    <th>Question</th>
+                    <th>Correct</th>
+                    <th>Marks</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for q in questions %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td><span class="badge badge-purple">{{ q.subject }}</span></td>
+                    <td class="q-text">{{ q.question_text[:80] }}{% if q.question_text|length > 80 %}...{% endif %}</td>
+                    <td><span class="badge badge-green">{{ q.correct_answer }}</span></td>
+                    <td>{{ q.marks }}</td>
+                    <td class="actions">
+                        <a href="{{ url_for('admin.edit_question', qid=q.id) }}" class="btn-sm btn-blue">Edit</a>
+                        <form method="POST" action="{{ url_for('admin.delete_question', qid=q.id) }}"
+                            style="display:inline" onsubmit="return confirm('Delete this question?')">
+                            <button type="submit" class="btn-sm btn-red">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="empty-row">No questions found. <a
+                            href="{{ url_for('admin.add_question') }}">Add one.</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

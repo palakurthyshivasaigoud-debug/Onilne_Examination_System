@@ -1,0 +1,60 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Exams{% endblock %}
+{% block page_title %}Manage Exams{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+    <span class="total-count">{{ exams|length }} exams</span>
+    <a href="{{ url_for('admin.add_exam') }}" class="btn-primary">+ Create Exam</a>
+</div>
+<div class="card">
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Subject</th>
+                    <th>Duration</th>
+                    <th>Questions</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in exams %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td><strong>{{ e.title }}</strong></td>
+                    <td><span class="badge badge-purple">{{ e.subject }}</span></td>
+                    <td>{{ e.duration_minutes }} min</td>
+                    <td>{{ e.total_questions }}</td>
+                    <td>
+                        {% if e.is_active %}<span class="badge badge-green">Active</span>
+                        {% else %}<span class="badge badge-red">Inactive</span>{% endif %}
+                    </td>
+                    <td class="actions">
+                        <form method="POST" action="{{ url_for('admin.toggle_exam', eid=e.id) }}"
+                            style="display:inline">
+                            <button type="submit"
+                                class="btn-sm {% if e.is_active %}btn-yellow{% else %}btn-green{% endif %}">
+                                {% if e.is_active %}Deactivate{% else %}Activate{% endif %}
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin.delete_exam', eid=e.id) }}" style="display:inline"
+                            onsubmit="return confirm('Delete exam?')">
+                            <button type="submit" class="btn-sm btn-red">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="empty-row">No exams yet. <a href="{{ url_for('admin.add_exam') }}">Create
+                            one.</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

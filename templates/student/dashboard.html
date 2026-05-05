@@ -1,0 +1,79 @@
+{% extends 'student/base_student.html' %}
+{% block title %}My Dashboard{% endblock %}
+{% block page_title %}Available Exams{% endblock %}
+
+{% block content %}
+<div class="exams-grid">
+    {% for exam in exams %}
+    <div class="exam-card">
+        <div class="exam-card-header">
+            <div class="exam-subject-icon">📝</div>
+            <span class="exam-subject">{{ exam.subject }}</span>
+        </div>
+        <h3 class="exam-title">{{ exam.title }}</h3>
+        <div class="exam-meta">
+            <span>⏱ {{ exam.duration_minutes }} min</span>
+            <span>❓ {{ exam.total_questions }} questions</span>
+        </div>
+        {% set my_result = results | selectattr('exam_id', 'equalto', exam.id) | selectattr('submitted_at', 'defined') |
+        list | first %}
+        {% if my_result and my_result.submitted_at %}
+        <div class="exam-done">
+            <span class="badge badge-green">✓ Completed</span>
+            <span class="score-mini">{{ "%.1f"|format(my_result.percentage) }}%</span>
+        </div>
+        <a href="{{ url_for('student.result', result_id=my_result.id) }}" class="btn-secondary btn-full mt-12">View
+            Result</a>
+        {% else %}
+        <a href="{{ url_for('student.start_exam', exam_id=exam.id) }}" class="btn-primary btn-full mt-12"
+            onclick="return confirm('Start exam? Timer will begin immediately.')">
+            Start Exam →
+        </a>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h3>No exams available</h3>
+        <p>Check back later when your admin schedules an exam.</p>
+    </div>
+    {% endfor %}
+</div>
+
+{% if results %}
+<div class="card mt-24">
+    <h3 class="card-heading">My Recent Results</h3>
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Exam</th>
+                    <th>Score</th>
+                    <th>Percentage</th>
+                    <th>Date</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in results[:5] %}
+                {% if r.submitted_at %}
+                <tr>
+                    <td>{{ r.exam.title }}</td>
+                    <td>{{ r.score }} / {{ r.total_marks }}</td>
+                    <td>
+                        <span
+                            class="badge {% if r.percentage >= 60 %}badge-green{% elif r.percentage >= 40 %}badge-yellow{% else %}badge-red{% endif %}">
+                            {{ "%.1f"|format(r.percentage) }}%
+                        </span>
+                    </td>
+                    <td>{{ r.submitted_at.strftime('%d %b %Y') }}</td>
+                    <td><a href="{{ url_for('student.result', result_id=r.id) }}" class="btn-sm btn-blue">View</a></td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

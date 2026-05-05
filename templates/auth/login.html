@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Login — Online Exam System{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-bg">
+    <div class="auth-particles"></div>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <div class="logo-icon">🎓</div>
+                <h1>ExamPro</h1>
+                <p>Online Examination System</p>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="tab-btn active" onclick="switchTab('login')">Sign In</button>
+                <button class="tab-btn" onclick="window.location='{{ url_for('auth.register') }}'">Register</button>
+            </div>
+
+            <form method="POST" action="{{ url_for('auth.login') }}" class="auth-form">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">✉</span>
+                        <input type="email" name="email" id="email" placeholder="Enter your email" required
+                            autocomplete="email">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" name="password" id="password" placeholder="Enter your password" required>
+                        <button type="button" class="toggle-pw" onclick="togglePassword('password')">👁</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary btn-full">
+                    <span>Sign In</span>
+                    <span class="btn-arrow">→</span>
+                </button>
+            </form>
+
+            <div class="auth-divider"><span>Demo Credentials</span></div>
+            <div class="demo-creds">
+                <div class="cred-item" onclick="fillCreds('admin@exam.com','Admin@123')">
+                    <span class="cred-role admin">Admin</span>
+                    <span>admin@exam.com / Admin@123</span>
+                </div>
+                <div class="cred-item" onclick="fillCreds('alice@student.com','Student@123')">
+                    <span class="cred-role student">Student</span>
+                    <span>alice@student.com / Student@123</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-info">
+            <div class="info-card">
+                <span class="info-icon">🛡</span>
+                <h3>AI Proctored</h3>
+                <p>Real-time face detection with OpenCV</p>
+            </div>
+            <div class="info-card">
+                <span class="info-icon">⚡</span>
+                <h3>Instant Results</h3>
+                <p>Auto-grading with email delivery</p>
+            </div>
+            <div class="info-card">
+                <span class="info-icon">📊</span>
+                <h3>Analytics</h3>
+                <p>Score distribution and insights</p>
+            </div>
+            <div class="info-card">
+                <span class="info-icon">🔒</span>
+                <h3>Anti-Cheat</h3>
+                <p>Tab switch detection & lockdown</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function fillCreds(email, pass) {
+        document.getElementById('email').value = email;
+        document.getElementById('password').value = pass;
+    }
+    function togglePassword(id) {
+        const inp = document.getElementById(id);
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+    // Floating particles
+    (function () {
+        const container = document.querySelector('.auth-particles');
+        for (let i = 0; i < 20; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'particle';
+            dot.style.cssText = `left:${Math.random() * 100}%;top:${Math.random() * 100}%;animation-delay:${Math.random() * 5}s;animation-duration:${5 + Math.random() * 10}s;width:${2 + Math.random() * 4}px;height:${2 + Math.random() * 4}px;`;
+            container.appendChild(dot);
+        }
+    })();
+</script>
+{% endblock %}

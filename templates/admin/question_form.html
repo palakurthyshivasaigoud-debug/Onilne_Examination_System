@@ -1,0 +1,84 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}{{ action }} Question{% endblock %}
+{% block page_title %}{{ action }} Question{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <form method="POST" class="admin-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Subject</label>
+                {% if subjects %}
+                <select name="subject" id="subjectSelect" class="form-control select-field"
+                    onchange="handleSubjectChange(this)" required>
+                    {% for s in subjects %}
+                    <option value="{{ s }}" {% if question and question.subject==s %}selected{% endif %}>{{ s }}
+                    </option>
+                    {% endfor %}
+                    <option value="__custom__">✏ Type custom subject…</option>
+                </select>
+                <input type="text" id="customSubject" name="subject_custom" class="form-control"
+                    placeholder="Enter subject name…" style="display:none;margin-top:8px">
+                <script>
+                    function handleSubjectChange(sel) {
+                        var custom = document.getElementById('customSubject');
+                        if (sel.value === '__custom__') {
+                            custom.style.display = 'block';
+                            custom.required = true;
+                            sel.name = '_subject_dropdown'; // disable this from submitting
+                            custom.name = 'subject';
+                        } else {
+                            custom.style.display = 'none';
+                            custom.required = false;
+                            sel.name = 'subject';
+                            custom.name = 'subject_custom';
+                        }
+                    }
+                </script>
+                {% else %}
+                <input type="text" name="subject" class="form-control"
+                    value="{{ question.subject if question else '' }}" placeholder="e.g. Computer Science" required>
+                <small style="color:#888">💡 Add subjects from Admin → Subjects to see a dropdown</small>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label>Marks</label>
+                <input type="number" name="marks" class="form-control" value="{{ question.marks if question else 1 }}"
+                    min="1" max="10" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Question Text</label>
+            <textarea name="question_text" class="form-control" rows="3" placeholder="Enter the full question..."
+                required>{{ question.question_text if question else '' }}</textarea>
+        </div>
+
+        <div class="options-grid">
+            {% for opt in ['a','b','c','d'] %}
+            <div class="form-group">
+                <label>Option {{ opt.upper() }}</label>
+                <input type="text" name="option_{{ opt }}" class="form-control"
+                    value="{{ question['option_'+opt] if question else '' }}" placeholder="Option {{ opt.upper() }}"
+                    required>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            <label>Correct Answer</label>
+            <select name="correct_answer" class="form-control select-field" required>
+                {% for opt in ['A','B','C','D'] %}
+                <option value="{{ opt }}" {% if question and question.correct_answer==opt %}selected{% endif %}>{{ opt
+                    }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ url_for('admin.questions') }}" class="btn-secondary">← Cancel</a>
+            <button type="submit" class="btn-primary">{{ action }} Question</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Create Exam{% endblock %}
+{% block page_title %}{{ action }} Exam{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <form method="POST" class="admin-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Exam Title</label>
+                <input type="text" name="title" class="form-control" value="{{ exam.title if exam else '' }}"
+                    placeholder="e.g. Computer Science Midterm" required>
+            </div>
+            <div class="form-group">
+                <label>Subject</label>
+                <select name="subject" class="form-control select-field" required>
+                    {% for s in subjects %}
+                    <option value="{{ s }}" {% if exam and exam.subject==s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Duration (minutes)</label>
+                <input type="number" name="duration_minutes" class="form-control"
+                    value="{{ exam.duration_minutes if exam else 30 }}" min="5" max="180" required>
+            </div>
+            <div class="form-group">
+                <label>Number of Questions</label>
+                <input type="number" name="total_questions" class="form-control"
+                    value="{{ exam.total_questions if exam else 10 }}" min="1" max="50" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" name="is_active" {% if not exam or exam.is_active %}checked{% endif %}> Active
+                (visible to students)
+            </label>
+        </div>
+        <div class="form-actions">
+            <a href="{{ url_for('admin.exams') }}" class="btn-secondary">← Cancel</a>
+            <button type="submit" class="btn-primary">{{ action }} Exam</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

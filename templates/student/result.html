@@ -1,0 +1,136 @@
+{% extends 'student/base_student.html' %}
+{% block title %}Result{% endblock %}
+{% block page_title %}Exam Result{% endblock %}
+
+{% block content %}
+
+{% if results_locked %}
+<!-- ── Results Locked: Show Countdown ─────────────── -->
+<div
+    style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;gap:24px">
+    <div style="font-size:84px;animation:pulse 1.5s ease infinite">🔒</div>
+    <h2 style="font-size:26px;font-weight:800">Results Not Yet Available</h2>
+    <p style="color:#aaa;font-size:16px;max-width:420px">
+        Your answers have been saved. Results will be unlocked once the full exam duration ends.
+    </p>
+    <div
+        style="background:rgba(102,126,234,0.1);border:1px solid rgba(102,126,234,0.3);border-radius:16px;padding:28px 48px;text-align:center">
+        <div style="font-size:13px;color:#aaa;margin-bottom:6px">Results available in</div>
+        <div id="lockCountdown"
+            style="font-size:52px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:3px;color:#667eea">
+            --:--
+        </div>
+        <div style="font-size:12px;color:#aaa;margin-top:6px">
+            Unlocks at {{ unlocked_at.strftime('%H:%M:%S') if unlocked_at else '—' }} UTC
+        </div>
+    </div>
+    <a href="{{ url_for('student.dashboard') }}" class="btn-secondary">← Back to Dashboard</a>
+</div>
+<script>
+    let remaining = {{ seconds_remaining }};
+    function updateLockCountdown() {
+        if (remaining <= 0) {
+            location.reload(); return;
+        }
+        const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+        const s = (remaining % 60).toString().padStart(2, '0');
+        document.getElementById('lockCountdown').textContent = `${m}:${s}`;
+        remaining--;
+        setTimeout(updateLockCountdown, 1000);
+    }
+    updateLockCountdown();
+</script>
+{% else %}
+
+<div class="result-page">
+    <!-- Score Hero -->
+    <div class="result-hero">
+        <div class="score-ring {% if result.percentage >= 60 %}ring-pass{% else %}ring-fail{% endif %}">
+            <svg class="ring-svg" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="10" />
+                <circle cx="60" cy="60" r="52" fill="none"
+                    stroke="{% if result.percentage >= 60 %}#4cd964{% else %}#ff3b30{% endif %}" stroke-width="10"
+                    stroke-linecap="round" stroke-dasharray="{{ (result.percentage / 100 * 326.7) | round }}, 326.7"
+                    transform="rotate(-90 60 60)" />
+            </svg>
+            <div class="ring-center">
+                <div class="ring-pct">{{ "%.0f"|format(result.percentage) }}%</div>
+                <div class="ring-lbl">Score</div>
+            </div>
+        </div>
+
+        <div class="result-details">
+            <h2>{{ result.exam.title }}</h2>
+            <div class="grade-display">
+                {% if result.percentage >= 80 %}
+                <span class="grade grade-a">Grade A</span><span class="grade-msg">Excellent!</span>
+                {% elif result.percentage >= 60 %}
+                <span class="grade grade-b">Grade B</span><span class="grade-msg">Good Work!</span>
+                {% elif result.percentage >= 40 %}
+                <span class="grade grade-c">Grade C</span><span class="grade-msg">Needs Improvement</span>
+                {% else %}
+                <span class="grade grade-f">Grade F</span><span class="grade-msg">Better luck next time</span>
+                {% endif %}
+            </div>
+            <div class="result-stats-row">
+                <div class="rs-item">
+                    <div class="rs-val">{{ result.score }} / {{ result.total_marks }}</div>
+                    <div class="rs-lbl">Marks</div>
+                </div>
+                <div class="rs-item">
+                    <div class="rs-val">{{ questions|length }}</div>
+                    <div class="rs-lbl">Questions</div>
+                </div>
+                <div class="rs-item">
+                    <div class="rs-val text-green">
+                        {% set correct = namespace(n=0) %}
+                        {% for q in questions %}{% if answers.get(q.id|string, '')|upper == q.correct_answer %}{% set
+                        correct.n = correct.n + 1 %}{% endif %}{% endfor %}
+                        {{ correct.n }}
+                    </div>
+                    <div class="rs-lbl">Correct</div>
+                </div>
+                <div class="rs-item">
+                    <div class="rs-val text-red">{{ proctor_alerts }}</div>
+                    <div class="rs-lbl">Alerts</div>
+                </div>
+            </div>
+            {% if result.is_disqualified %}
+            <div class="disqualified-notice">⚠ Flagged: {{ result.disqualify_reason }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Question Review -->
+    <div class="card mt-24">
+        <h3 class="card-heading">Detailed Review</h3>
+        {% for q in questions %}
+        {% set chosen = answers.get(q.id|string, '') | upper %}
+        <div class="review-item {% if chosen == q.correct_answer %}review-correct{% else %}review-wrong{% endif %}">
+            <div class="review-q">{{ loop.index }}. {{ q.question_text }}</div>
+            <div class="review-options">
+                {% for opt in ['A','B','C','D'] %}
+                {% set opt_text = q['option_' + opt.lower()] %}
+                <span
+                    class="opt {% if opt == q.correct_answer %}opt-correct{% elif opt == chosen and opt != q.correct_answer %}opt-wrong{% endif %}">
+                    <strong>{{ opt }}.</strong> {{ opt_text }}
+                </span>
+                {% endfor %}
+            </div>
+            <div class="review-meta">
+                Your answer: <strong>{{ chosen or 'Not answered' }}</strong> ·
+                Correct: <strong class="text-green">{{ q.correct_answer }}</strong> ·
+                {% if chosen == q.correct_answer %}<span class="text-green">+{{ q.marks }} mark(s)</span>{% else %}<span
+                    class="text-red">0 marks</span>{% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="result-actions">
+        <a href="{{ url_for('student.dashboard') }}" class="btn-primary">← Back to Dashboard</a>
+        <a href="{{ url_for('student.my_results') }}" class="btn-secondary">All Results</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

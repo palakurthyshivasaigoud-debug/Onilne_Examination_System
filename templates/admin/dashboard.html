@@ -1,0 +1,126 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stat Cards -->
+<div class="stats-grid">
+    <div class="stat-card gradient-purple">
+        <div class="stat-icon">👥</div>
+        <div class="stat-val">{{ total_students }}</div>
+        <div class="stat-lbl">Total Students</div>
+    </div>
+    <div class="stat-card gradient-blue">
+        <div class="stat-icon">❓</div>
+        <div class="stat-val">{{ total_questions }}</div>
+        <div class="stat-lbl">Questions in Bank</div>
+    </div>
+    <div class="stat-card gradient-teal">
+        <div class="stat-icon">📝</div>
+        <div class="stat-val">{{ total_exams }}</div>
+        <div class="stat-lbl">Active Exams</div>
+    </div>
+    <div class="stat-card gradient-orange">
+        <div class="stat-icon">🏆</div>
+        <div class="stat-val">{{ total_results }}</div>
+        <div class="stat-lbl">Exams Attempted</div>
+    </div>
+</div>
+
+<!-- Score Summary -->
+<div class="summary-row">
+    <div class="summary-card">
+        <span class="summary-icon">📈</span>
+        <div class="summary-body">
+            <div class="summary-value text-green">{{ avg_score }}%</div>
+            <div class="summary-label">Average Score</div>
+        </div>
+    </div>
+    <div class="summary-card">
+        <span class="summary-icon">🥇</span>
+        <div class="summary-body">
+            <div class="summary-value text-blue">{{ highest_score }}%</div>
+            <div class="summary-label">Highest Score</div>
+        </div>
+    </div>
+    <div class="summary-card">
+        <span class="summary-icon">📉</span>
+        <div class="summary-body">
+            <div class="summary-value text-red">{{ lowest_score }}%</div>
+            <div class="summary-label">Lowest Score</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="charts-row">
+    <div class="chart-card">
+        <h3 class="chart-title">Score Distribution</h3>
+        <canvas id="distChart" height="280"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3 class="chart-title">Recent Scores (Line)</h3>
+        <canvas id="lineChart" height="280"></canvas>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Bar chart: score distribution
+    const distCtx = document.getElementById('distChart').getContext('2d');
+    new Chart(distCtx, {
+        type: 'bar',
+        data: {
+            labels: JSON.parse('{{ bucket_labels | tojson }}'),
+            datasets: [{
+                label: 'Students',
+                data: JSON.parse('{{ bucket_data | tojson }}'),
+                backgroundColor: [
+                    'rgba(255,99,132,0.7)', 'rgba(255,165,0,0.7)', 'rgba(255,206,86,0.7)',
+                    'rgba(75,192,192,0.7)', 'rgba(102,126,234,0.7)'
+                ],
+                borderColor: ['#ff6384', '#ff8c00', '#ffce56', '#4bc0c0', '#667eea'],
+                borderWidth: 2,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: '#ccc' } } },
+            scales: {
+                x: { ticks: { color: '#aaa' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#aaa', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
+            }
+        }
+    });
+
+    // Line chart: score trend
+    const lineCtx = document.getElementById('lineChart').getContext('2d');
+    new Chart(lineCtx, {
+        type: 'line',
+        data: {
+            labels: JSON.parse('{{ line_labels | tojson }}'),
+            datasets: [{
+                label: 'Score (%)',
+                data: JSON.parse('{{ line_data | tojson }}'),
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102,126,234,0.15)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#764ba2',
+                pointRadius: 5,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: '#ccc' } } },
+            scales: {
+                x: { ticks: { color: '#aaa' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { min: 0, max: 100, ticks: { color: '#aaa' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        }
+    });
+</script>
+{% endblock %}

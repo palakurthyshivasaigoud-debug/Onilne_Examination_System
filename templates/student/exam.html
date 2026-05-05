@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ exam.title }} — ExamPro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/exam.css') }}">
+</head>
+
+<body class="exam-body" id="examBody">
+
+    <!-- ── Termination Overlay ─────────────────────────── -->
+    <div id="terminateOverlay" class="alert-overlay terminate-overlay" style="display:none">
+        <div class="alert-box">
+            <div class="alert-icon">🚫</div>
+            <h2 id="terminateTitle">Exam Terminated</h2>
+            <p id="terminateMsg">Your exam has been terminated. Submitting answers…</p>
+            <div
+                style="width:40px;height:40px;border:3px solid #667eea;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto">
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Camera Required Error ──────────────────────── -->
+    <div id="camRequired" class="alert-overlay" style="display:none">
+        <div class="alert-box">
+            <div class="alert-icon">📷</div>
+            <h2>Camera Access Required</h2>
+            <p>This exam requires camera access for AI proctoring. Please allow camera permissions and reload.</p>
+            <button onclick="location.reload()" class="btn-primary" style="margin-top:8px">Reload Page</button>
+        </div>
+    </div>
+
+    <!-- ── Top Bar ─────────────────────────────────────── -->
+    <div class="exam-topbar">
+        <div class="exam-info">
+            <span class="exam-name">{{ exam.title }}</span>
+            <span class="exam-subject">{{ exam.subject }}</span>
+        </div>
+        <div class="exam-center">
+            <div class="timer-wrap">
+                <span class="timer-icon">⏱</span>
+                <span id="timer" class="timer-display">--:--</span>
+            </div>
+        </div>
+        <div class="exam-meta-right">
+            <span id="progress-label">0 / {{ questions|length }}</span>
+            <button onclick="confirmSubmit()" class="submit-btn" id="submitBtn">Submit Exam</button>
+        </div>
+    </div>
+
+    <!-- ── Main Layout ─────────────────────────────────── -->
+    <div class="exam-layout">
+
+        <!-- Webcam + Screen Panel -->
+        <div class="webcam-panel">
+            <div class="webcam-header">
+                <span class="cam-dot" id="camDot"></span>
+                <span>Live Proctoring</span>
+            </div>
+
+            <!-- Webcam feed -->
+            <div class="cam-container">
+                <video id="webcam" autoplay muted playsinline></video>
+                <canvas id="camCanvas" style="display:none"></canvas>
+                <div id="camStatus" class="cam-status">Initializing…</div>
+            </div>
+            <div id="camAlert" class="cam-alert" style="display:none"></div>
+
+            <!-- Screen share preview -->
+            <div style="margin-top:8px">
+                <div style="font-size:12px;color:#aaa;margin-bottom:4px">
+                    🖥 <span id="screenShareStatus" style="color:#ff9500">Requesting screen…</span>
+                </div>
+                <div style="position:relative;background:#000;border-radius:8px;overflow:hidden;aspect-ratio:16/9">
+                    <video id="screenPreview" autoplay muted playsinline
+                        style="width:100%;height:100%;object-fit:cover;display:none"></video>
+                    <div id="screenPlaceholder"
+                        style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px">
+                        🖥</div>
+                </div>
+                <canvas id="screenCanvas" style="display:none"></canvas>
+            </div>
+
+            <!-- Stats -->
+            <div class="proctor-stats">
+                <div><span id="snapCount">0</span><br><small>Snapshots</small></div>
+                <div><span id="alertCount">0</span><br><small>Alerts</small></div>
+            </div>
+        </div>
+
+        <!-- Questions panel -->
+        <div class="questions-panel">
+            <!-- Question Nav -->
+            <div class="q-nav">
+                {% for q in questions %}
+                <button class="q-nav-btn" id="nav-{{ loop.index0 }}" data-idx="{{ loop.index0 }}"
+                    onclick="goToQuestion(parseInt(this.dataset.idx))">{{ loop.index }}</button>
+                {% endfor %}
+            </div>
+
+            <!-- Question Cards -->
+            <div class="q-cards" id="qCards">
+                {% for q in questions %}
+                {# ── Capture OUTER loop index BEFORE the inner loop overwrites it ── #}
+                {% set q_idx = loop.index0 %}
+                <div class="q-card {% if loop.index0 == 0 %}active{% endif %}" id="q-{{ q_idx }}" data-qid="{{ q.id }}">
+                    <div class="q-header">
+                        <span class="q-number">Question {{ loop.index }} of {{ questions|length }}</span>
+                        <span class="q-marks">{{ q.marks }} mark{% if q.marks > 1 %}s{% endif %}</span>
+                    </div>
+                    <p class="q-text">{{ q.question_text }}</p>
+                    <div class="options-list">
+                        {% for opt, text in [('A', q.option_a), ('B', q.option_b), ('C', q.option_c), ('D', q.option_d)]
+                        %}
+                        <label class="option-label" id="opt-{{ q.id }}-{{ opt }}" data-qid="{{ q.id }}"
+                            data-opt="{{ opt }}" data-idx="{{ q_idx }}"
+                            onclick="selectAnswer(this.dataset.qid, this.dataset.opt, parseInt(this.dataset.idx))">
+                            <input type="radio" name="q-{{ q.id }}" value="{{ opt }}">
+                            <span class="opt-letter">{{ opt }}</span>
+                            <span class="opt-text">{{ text }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <div class="q-actions">
+                        {% if not loop.first %}
+                        <button class="btn-secondary" data-idx="{{ q_idx - 1 }}"
+                            onclick="goToQuestion(parseInt(this.dataset.idx))">← Previous</button>
+                        {% else %}<span></span>{% endif %}
+                        {% if not loop.last %}
+                        <button class="btn-primary" data-idx="{{ q_idx + 1 }}"
+                            onclick="goToQuestion(parseInt(this.dataset.idx))">Next →</button>
+                        {% else %}
+                        <button class="btn-primary" onclick="confirmSubmit()">Submit Exam ✓</button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <style>
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+
+    <script>
+        // Constants passed from Flask to exam.js
+        // Wrapped in parseInt/parseFloat to avoid VS Code JS false-positive lint errors
+        const RESULT_ID = parseInt("{{ result_id }}");
+        const DURATION = parseInt("{{ duration_seconds }}");
+        const TOTAL_QUESTIONS = parseInt("{{ questions|length }}");
+        const SUBMIT_URL = "{{ url_for('student.submit_exam') }}";
+        const SNAPSHOT_URL = "{{ url_for('proctor.snapshot') }}";
+        const LOG_URL = "{{ url_for('proctor.log_event') }}";
+        let timeLeft = DURATION;
+    </script>
+    <script src="{{ url_for('static', filename='js/exam.js') }}"></script>
+</body>
+
+</html>

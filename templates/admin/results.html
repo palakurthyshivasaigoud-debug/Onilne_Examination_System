@@ -1,0 +1,75 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}All Results{% endblock %}
+{% block page_title %}Student Results{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Student</th>
+                    <th>Exam</th>
+                    <th>Score</th>
+                    <th>Percentage</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in results %}
+                {% set pct = (r.percentage if r.percentage is not none else 0) | float %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>
+                        {% if r.student %}
+                        <strong>{{ r.student.name }}</strong><br>
+                        <small class="text-muted">{{ r.student.email }}</small>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>{% if r.exam %}{{ r.exam.title }}{% else %}—{% endif %}</td>
+                    <td>{{ r.score or 0 }} / {{ r.total_marks or 0 }}</td>
+                    <td>
+                        <div class="progress-bar">
+                            <div class="progress-fill {% if pct >= 60 %}progress-green{% elif pct >= 40 %}progress-yellow{% else %}progress-red{% endif %}"
+                                style="width: 0%" data-width="{{ pct | round | int }}"></div>
+                        </div>
+                        <span>{{ "%.1f" | format(pct) }}%</span>
+                    </td>
+                    <td>
+                        {% if r.is_disqualified %}
+                        <span class="badge badge-red">⚠ Flagged</span>
+                        {% elif r.submitted_at %}
+                        <span class="badge badge-green">✓ Completed</span>
+                        {% else %}
+                        <span class="badge badge-yellow">In Progress</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if r.submitted_at %}
+                        {{ r.submitted_at.strftime('%d %b %Y %H:%M') }}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin.result_detail', rid=r.id) }}" class="btn-sm btn-blue">View</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="empty-row">No results yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+    document.querySelectorAll('.progress-fill[data-width]').forEach(function (el) {
+        el.style.width = el.dataset.width + '%';
+    });
+</script>
+{% endblock %}

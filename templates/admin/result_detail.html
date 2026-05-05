@@ -1,0 +1,77 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Result Detail{% endblock %}
+{% block page_title %}Result Detail{% endblock %}
+
+{% block content %}
+<div class="result-header-card">
+    <div class="result-meta">
+        <h2>{{ result.student.name }}</h2>
+        <p>{{ result.exam.title }} · {{ result.submitted_at.strftime('%d %b %Y %H:%M') if result.submitted_at else 'In
+            Progress' }}</p>
+        {% if result.is_disqualified %}
+        <span class="badge badge-red">⚠ Disqualified: {{ result.disqualify_reason }}</span>
+        {% endif %}
+    </div>
+    <div class="result-score-circle {% if result.percentage >= 60 %}score-pass{% else %}score-fail{% endif %}">
+        <div class="circle-pct">{{ "%.0f"|format(result.percentage) }}%</div>
+        <div class="circle-lbl">{{ result.score }} / {{ result.total_marks }}</div>
+    </div>
+</div>
+
+{% if logs %}
+<div class="card">
+    <h3>Proctoring Events ({{ logs|length }})</h3>
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Event</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.timestamp.strftime('%H:%M:%S') }}</td>
+                    <td>
+                        <span
+                            class="badge {% if log.event_type == 'no_face' %}badge-red{% elif log.event_type == 'multi_face' %}badge-orange{% else %}badge-yellow{% endif %}">
+                            {{ log.event_type }}
+                        </span>
+                    </td>
+                    <td>{{ log.message }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <h3>Question Review</h3>
+    {% for q in questions %}
+    {% set chosen = answers.get(q.id|string, '') | upper %}
+    <div class="review-item {% if chosen == q.correct_answer %}review-correct{% else %}review-wrong{% endif %}">
+        <div class="review-q">Q{{ loop.index }}. {{ q.question_text }}</div>
+        <div class="review-options">
+            {% for opt in ['A','B','C','D'] %}
+            {% set opt_text = q['option_' + opt.lower()] %}
+            <span class="opt {% if opt == q.correct_answer %}opt-correct{% elif opt == chosen %}opt-wrong{% endif %}">
+                <strong>{{ opt }}.</strong> {{ opt_text }}
+            </span>
+            {% endfor %}
+        </div>
+        <div class="review-meta">
+            Your answer: <strong>{{ chosen or 'Not answered' }}</strong> ·
+            Correct: <strong class="text-green">{{ q.correct_answer }}</strong>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div style="margin-top:16px;">
+    <a href="{{ url_for('admin.results') }}" class="btn-secondary">← Back to Results</a>
+</div>
+{% endblock %}

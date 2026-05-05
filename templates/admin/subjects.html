@@ -1,0 +1,84 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Subjects{% endblock %}
+{% block page_title %}📚 Subject Management{% endblock %}
+
+{% block content %}
+<div style="display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start">
+
+    <!-- ── Add Subject Form ─────────────────── -->
+    <div class="card">
+        <h3 style="font-size:16px;margin-bottom:18px;color:#fff">➕ Add New Subject</h3>
+        <form method="POST" action="{{ url_for('admin.add_subject') }}">
+            <div class="form-group">
+                <label class="form-label">Subject Name *</label>
+                <input type="text" name="name" class="form-control" placeholder="e.g. Physics, History…" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description <small style="color:#888">(optional)</small></label>
+                <input type="text" name="description" class="form-control" placeholder="Short description…">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%">Add Subject</button>
+        </form>
+    </div>
+
+    <!-- ── Subjects List ──────────────────────── -->
+    <div class="card">
+        <h3 style="font-size:16px;margin-bottom:18px;color:#fff">All Subjects ({{ subjects|length }})</h3>
+        {% if subjects %}
+        <div style="display:flex;flex-direction:column;gap:10px">
+            {% for s in subjects %}
+            <div
+                style="background:rgba(255,255,255,0.04);border:1px solid rgba(102,126,234,0.2);border-radius:12px;padding:14px 18px">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                    <div>
+                        <div style="font-weight:600;font-size:15px;color:#fff">{{ s.name }}</div>
+                        {% if s.description %}
+                        <div style="font-size:12px;color:#888;margin-top:2px">{{ s.description }}</div>
+                        {% endif %}
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px">
+                        <span class="badge badge-purple">{{ s.q_count }} Q's</span>
+                        <span class="badge badge-blue">{{ s.e_count }} Exams</span>
+                        <button
+                            onclick="document.getElementById('edit-{{ s.id }}').style.display='block'; this.style.display='none'"
+                            class="btn-sm btn-blue" id="editbtn-{{ s.id }}">Edit</button>
+                        <form method="POST" action="{{ url_for('admin.delete_subject', sid=s.id) }}"
+                            onsubmit="return confirm('Delete subject &quot;{{ s.name }}&quot;?')"
+                            style="display:inline">
+                            <button type="submit" class="btn-sm btn-red">Delete</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Inline edit form (hidden) -->
+                <div id="edit-{{ s.id }}"
+                    style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08)">
+                    <form method="POST" action="{{ url_for('admin.edit_subject', sid=s.id) }}"
+                        style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+                        <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0">
+                            <label class="form-label" style="font-size:12px">Name</label>
+                            <input type="text" name="name" class="form-control" value="{{ s.name }}" required>
+                        </div>
+                        <div class="form-group" style="flex:2;min-width:200px;margin-bottom:0">
+                            <label class="form-label" style="font-size:12px">Description</label>
+                            <input type="text" name="description" class="form-control"
+                                value="{{ s.description or '' }}">
+                        </div>
+                        <button type="submit" class="btn-sm btn-blue">Save</button>
+                        <button type="button"
+                            onclick="document.getElementById('edit-{{ s.id }}').style.display='none'; document.getElementById('editbtn-{{ s.id }}').style.display=''"
+                            class="btn-sm btn-red">Cancel</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align:center;padding:40px;color:#888">
+            <div style="font-size:40px;margin-bottom:12px">📚</div>
+            <p>No subjects yet. Add your first subject on the left.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

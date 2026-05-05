@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Register — Online Exam System{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-bg">
+    <div class="auth-particles"></div>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <div class="logo-icon">🎓</div>
+                <h1>ExamPro</h1>
+                <p>Create Student Account</p>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="tab-btn" onclick="window.location='{{ url_for('auth.login') }}'">Sign In</button>
+                <button class="tab-btn active">Register</button>
+            </div>
+
+            <form method="POST" action="{{ url_for('auth.register') }}" class="auth-form">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">👤</span>
+                        <input type="text" name="name" placeholder="Your full name" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">✉</span>
+                        <input type="email" name="email" placeholder="Your email address" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" name="password" id="pw" placeholder="At least 6 characters" required>
+                        <button type="button" class="toggle-pw" onclick="togglePassword('pw')">👁</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" name="confirm_password" id="cpw" placeholder="Repeat your password"
+                            required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary btn-full">
+                    <span>Create Account</span>
+                    <span class="btn-arrow">→</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function togglePassword(id) {
+        const inp = document.getElementById(id);
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+    (function () {
+        const container = document.querySelector('.auth-particles');
+        for (let i = 0; i < 20; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'particle';
+            dot.style.cssText = `left:${Math.random() * 100}%;top:${Math.random() * 100}%;animation-delay:${Math.random() * 5}s;animation-duration:${5 + Math.random() * 10}s;`;
+            container.appendChild(dot);
+        }
+    })();
+</script>
+{% endblock %}
