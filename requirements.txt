@@ -11,3 +11,4 @@ Pillow==10.4.0
 Werkzeug==3.0.4
 gunicorn==22.0.0
 pdfplumber==0.11.4
+psycopg2-binary==2.9.9

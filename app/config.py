@@ -8,10 +8,12 @@ class Config:
     DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 
     # ── Database ─────────────────────────────────────────────────────────
-    # Priority: DATABASE_URL (SQLite) → MySQL config → default SQLite
+    # Priority: DATABASE_URL (Postgres/SQLite) → MySQL config → default SQLite
     DATABASE_URL = os.environ.get('DATABASE_URL')
     if DATABASE_URL:
-        # SQLite or full URL provided (e.g. sqlite:///exam_system.db)
+        # Heroku uses 'postgres://', but SQLAlchemy 1.4+ requires 'postgresql://'
+        if DATABASE_URL.startswith("postgres://"):
+            DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
         SQLALCHEMY_DATABASE_URI = DATABASE_URL
     else:
         # Build MySQL URI from individual parts
